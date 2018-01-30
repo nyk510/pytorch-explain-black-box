@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import torch
 from torch.autograd import Variable
+from torch.nn.functional import softmax
 from torchvision import models
 
 from utils import get_logger
@@ -84,14 +85,16 @@ def generate_masked_images(mask, original, blurred):
 def save(img, file_name, save_dir="output"):
     """
     mask 画像と元画像をかけ合わせた画像を生成し保存する.
-    :param save_dir:
-    :param prefix:
+    :param img:
+    :param str file_name:
+    :param str save_dir:
     :return:
     """
     if os.path.exists(save_dir) is False:
         os.makedirs(save_dir)
 
     filename = os.path.join(save_dir, file_name)
+    logger.info("save to {}".format(filename))
     cv2.imwrite(filename, np.uint8(255 * img))
 
 
@@ -142,7 +145,6 @@ def run(img_path,
     :param float tv_coefficient:
     :return:
     """
-
     model = load_model()
     original_img = cv2.imread(img_path, 1)
     original_img = cv2.resize(original_img, (224, 224))
@@ -163,12 +165,12 @@ def run(img_path,
         upsample = torch.nn.Upsample(size=(224, 224))
     optimizer = torch.optim.Adam([mask], lr=lr)
 
-    target = torch.nn.Softmax()(model(img))
+    target = softmax(model(img), dim=1)
     # gpu -> cpu
     target = target.cpu().data.numpy()
     category = np.argmax(target)
     prob = np.max(target) * 100
-    print("Category with highest probability: {category} - {prob:.2f}%".format(**locals()))
+    print("-" * 30 + "\nCategory with highest probability: {category} - {prob:.2f} %".format(**locals()))
     print("Optimizing.. ")
 
     for i in range(max_iterations):
@@ -190,8 +192,9 @@ def run(img_path,
         noise = numpy_to_torch(noise)
         perturbated_input = perturbated_input + noise
 
-        outputs = torch.nn.Softmax()(model(perturbated_input))
-        loss = l1_coefficient * torch.mean(torch.abs(1 - mask)) + tv_coefficient * tv_norm(mask, tv_beta) + outputs[
+        output_i = model(perturbated_input)
+        prob_i = softmax(output_i, dim=1)
+        loss = l1_coefficient * torch.mean(torch.abs(1 - mask)) + tv_coefficient * tv_norm(mask, tv_beta) + prob_i[
             0, int(category)]
 
         optimizer.zero_grad()
@@ -201,18 +204,18 @@ def run(img_path,
         # Optional: clamping seems to give better results
         mask.data.clamp_(0, 1)
 
+    logger.info("finish!")
+
     # mask を (224, 224) に up sampling しその後 cpu に dump してから shape = (1, 224, 224) に変換
     upsampled_mask = upsample(mask).cpu().data.numpy()[0]
-    print(upsampled_mask)
 
     input_filename = os.path.splitext(ntpath.basename(img_path))[0]
-    logger.info(input_filename)
 
     perturbated, heat_map, mask, cam = generate_masked_images(upsampled_mask, original_img, blurred_img_numpy)
-    pred_masked = torch.nn.Softmax()(model(preprocess_image(perturbated)))
+    pred_masked = softmax(model(preprocess_image(perturbated * 255)), dim=1)
     pred_masked = pred_masked.cpu().data.numpy()[0, :]
     prob_masked = pred_masked[category] * 100
-    logger.info("after masked probability: {prob_masked:.2f}".format(**locals()))
+    logger.info("-" * 30 + "\nafter masked probability: {prob_masked:.2f} %".format(**locals()))
 
     # 入力された画像のファイル名を先頭に付けて保存する
     for img, name in zip([perturbated, heat_map, mask, cam], ["perturbated", "heat_map", "mask", "cam"]):
