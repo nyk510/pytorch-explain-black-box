@@ -94,7 +94,7 @@ def load_model():
 
 def run(img_path,
         tv_beta=3,
-        learning_rate=0.1,
+        lr=0.1,
         max_iterations=500,
         l1_coefficient=0.01,
         tv_coefficient=0.2):
@@ -103,7 +103,7 @@ def run(img_path,
 
     :param str img_path:
     :param int tv_beta:
-    :param float learning_rate:
+    :param float lr: learning rate
     :param int max_iterations:
     :param float l1_coefficient:
     :param float tv_coefficient:
@@ -128,7 +128,7 @@ def run(img_path,
         upsample = torch.nn.UpsamplingBilinear2d(size=(224, 224)).cuda()
     else:
         upsample = torch.nn.UpsamplingBilinear2d(size=(224, 224))
-    optimizer = torch.optim.Adam([mask], lr=learning_rate)
+    optimizer = torch.optim.Adam([mask], lr=lr)
 
     target = torch.nn.Softmax()(model(img))
     category = np.argmax(target.cpu().data.numpy())
