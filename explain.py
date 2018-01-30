@@ -40,7 +40,8 @@ def preprocess_image(img):
     means = [0.485, 0.456, 0.406]
     stds = [0.229, 0.224, 0.225]
 
-    preprocessed_img = img[:, :, ::-1]
+    preprocessed_img = np.float32(img)
+    preprocessed_img = preprocessed_img[:, :, ::-1]
     preprocessed_img /= 255.
     for i in range(3):
         preprocessed_img[:, :, i] = preprocessed_img[:, :, i] - means[i]
@@ -208,6 +209,10 @@ def run(img_path,
     logger.info(input_filename)
 
     perturbated, heat_map, mask, cam = generate_masked_images(upsampled_mask, original_img, blurred_img_numpy)
+    pred_masked = torch.nn.Softmax()(model(preprocess_image(perturbated)))
+    pred_masked = pred_masked.cpu().data.numpy()[0, :]
+    prob_masked = pred_masked[category] * 100
+    logger.info("after masked probability: {prob_masked:.2f}".format(**locals()))
 
     # 入力された画像のファイル名を先頭に付けて保存する
     for img, name in zip([perturbated, heat_map, mask, cam], ["perturbated", "heat_map", "mask", "cam"]):
