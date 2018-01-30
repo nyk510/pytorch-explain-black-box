@@ -152,7 +152,7 @@ def run(img_path,
 
         outputs = torch.nn.Softmax()(model(perturbated_input))
         loss = l1_coefficient * torch.mean(torch.abs(1 - mask)) + tv_coefficient * tv_norm(mask, tv_beta) + outputs[
-            0, category]
+            0, int(category)]
 
         optimizer.zero_grad()
         loss.backward()
