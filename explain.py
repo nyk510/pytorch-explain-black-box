@@ -125,9 +125,9 @@ def run(img_path,
     mask = numpy_to_torch(mask_init)
 
     if use_cuda:
-        upsample = torch.nn.UpsamplingBilinear2d(size=(224, 224)).cuda()
+        upsample = torch.nn.Upsample(size=(224, 224)).cuda()
     else:
-        upsample = torch.nn.UpsamplingBilinear2d(size=(224, 224))
+        upsample = torch.nn.Upsample(size=(224, 224))
     optimizer = torch.optim.Adam([mask], lr=lr)
 
     target = torch.nn.Softmax()(model(img))
