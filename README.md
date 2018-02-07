@@ -39,3 +39,9 @@ optional arguments:
   --tv_coefficient TV_COEFFICIENT
                         tv loss weight
 ```
+
+## 結果
+
+| 元画像 | マスク適用後画像 | マスク領域 |
+|:-----|:----|:-----|
+|<img src="./examples/macaque.jpg" width="200" height="200">|<img src="./output/macaque_perturbated.png" width="200" height="200">|<img src="./output/macaque_cam.png" width="200" height="200">
