@@ -219,7 +219,7 @@ def run(img_path,
 
     # 入力された画像のファイル名を先頭に付けて保存する
     for img, name in zip([perturbated, heat_map, mask, cam], ["perturbated", "heat_map", "mask", "cam"]):
-        fname_i = input_filename + name + ".png"
+        fname_i = input_filename + "_" + name + ".png"
         save(img, file_name=fname_i, save_dir="output")
 
 
