@@ -2,11 +2,12 @@
 
 [Interpretable Explanations of Black Boxes by Meaningful Perturbation](https://arxiv.org/abs/1704.03296) の pytorch 実装
 
-## 準備(GPUで使う)
+## 準備
 
-nvidia-docker がインストールされていることが前提です。また以下のコマンドは当リポジトリのルートにて実行してください。
+Docker + GPU 環境で使う場合は以下を参照. 
 
 ```bash
+# pytorch 公式 docker file を入手する為 git clone
 git clone https://github.com/pytorch/pytorch.git
 cd pytorch
 docker build -t pytorch ./
